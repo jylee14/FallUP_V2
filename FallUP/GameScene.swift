@@ -43,7 +43,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     
     override func didMove(to view: SKView) {
         self.physicsWorld.contactDelegate = self
-        self.scaleMode = .fill  //added to scale to fit
+        self.scaleMode = .aspectFill  //added to scale to fit
         gameFrame = view.frame.size
         
         scoreNode.color = SKColor.white
@@ -105,8 +105,8 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         let randomY = CGFloat(arc4random_uniform(125))
         
         let passNode = SKSpriteNode()   //need to check if the player passes through
-        let enemy1 = spawnEnemies(Int(arc4random_uniform(score % 3)))   //bomb or wall?
-        let enemy2 = spawnEnemies(Int(arc4random_uniform(score % 3)))   //bomb or wall?
+        let enemy1 = spawnEnemies(Int(arc4random_uniform(score % 2)))   //bomb or wall?
+        let enemy2 = spawnEnemies(Int(arc4random_uniform(score % 2)))   //bomb or wall?
         
         enemy1.position = CGPoint(x: (gameFrame?.width)! + 50, y: randomY + 150)
         enemy2.position = CGPoint(x: (gameFrame?.width)! + 50, y: randomY - 150)
@@ -171,18 +171,22 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     private func changeBallGravity(){
         if isBlue{
             ball?.texture = SKTexture(imageNamed: "orangeBall")
-            ball?.physicsBody?.applyImpulse(CGVector(dx: 0, dy: 2.0))
+            ball?.physicsBody?.applyImpulse(CGVector(dx: 0, dy: 2.5))
             self.physicsWorld.gravity = CGVector(dx: 0.0, dy: 5.0)
             isBlue = false
         }else{
             ball?.texture = SKTexture(imageNamed: "blueBall")
-            ball?.physicsBody?.applyImpulse(CGVector(dx: 0, dy: -2.0))
+            ball?.physicsBody?.applyImpulse(CGVector(dx: 0, dy: -2.5))
             self.physicsWorld.gravity = CGVector(dx: 0.0, dy: -5.0)
             isBlue = true
         }
     }
     
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
-        changeBallGravity()
+        if isPlaying{
+            changeBallGravity()
+        }else{
+            self.view?.presentScene(SKScene(fileNamed: "loadScene"))
+        }
     }
 }
