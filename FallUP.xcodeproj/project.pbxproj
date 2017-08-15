@@ -60,17 +60,25 @@
 		BF46E1D01F4295FE0056485A /* FallUP */ = {
 			isa = PBXGroup;
 			children = (
-				BF46E1D11F4295FE0056485A /* AppDelegate.swift */,
 				BF46E1D31F4295FE0056485A /* GameScene.sks */,
-				BF46E1D51F4295FE0056485A /* Actions.sks */,
 				BF46E1D71F4295FE0056485A /* GameScene.swift */,
 				BF46E1D91F4295FE0056485A /* GameViewController.swift */,
+				BF46E1E01F4295FE0056485A /* LaunchScreen.storyboard */,
 				BF46E1DB1F4295FE0056485A /* Main.storyboard */,
 				BF46E1DE1F4295FE0056485A /* Assets.xcassets */,
-				BF46E1E01F4295FE0056485A /* LaunchScreen.storyboard */,
-				BF46E1E31F4295FE0056485A /* Info.plist */,
+				BF46E1E91F4296310056485A /* Supporting Files */,
 			);
 			path = FallUP;
+			sourceTree = "<group>";
+		};
+		BF46E1E91F4296310056485A /* Supporting Files */ = {
+			isa = PBXGroup;
+			children = (
+				BF46E1D11F4295FE0056485A /* AppDelegate.swift */,
+				BF46E1D51F4295FE0056485A /* Actions.sks */,
+				BF46E1E31F4295FE0056485A /* Info.plist */,
+			);
+			name = "Supporting Files";
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
