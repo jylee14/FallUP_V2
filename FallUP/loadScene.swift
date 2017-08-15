@@ -1,38 +1,27 @@
 //
-//  loadScene
+//  LoadScene.swift
 //  FallUP
 //
-//  Created by Jun Lee on 8/14/17.
+//  Created by Jun Lee on 8/15/17.
 //  Copyright © 2017 Jun Lee. All rights reserved.
 //
 
+import Foundation
 import SpriteKit
 
-class loadScene: SKScene, SKPhysicsContactDelegate {
-    //in game sprites
-    private var ball: SKSpriteNode?  //player's character
-    private var topWall: SKSpriteNode?  //top wall
-    private var botWall: SKSpriteNode?  //bottom wall
+class LoadScene: SKScene, SKPhysicsContactDelegate{
+    private var ball: SKSpriteNode?
+    private var topWall: SKSpriteNode?
+    private var botWall: SKSpriteNode?
     
-    //game logic variables
-    private var isBlue = true
-    private var gameFrame: CGSize?
+    private var isBlue = false
     
     override func didMove(to view: SKView) {
-        print("LOADSCENE LOADED")
-        
         self.physicsWorld.contactDelegate = self
-        self.scaleMode = .aspectFill  //added to scale to fit
-        gameFrame = view.frame.size
         
-        let scoreNode = SKLabelNode()
-        scoreNode.color = SKColor.white
-        scoreNode.position = CGPoint(x: self.frame.midX, y: self.frame.midY + 100)
-        scoreNode.fontSize = CGFloat(40)
-        scoreNode.text = "0"
-        addChild(scoreNode)
-        
+        print("LOADSCENE LOADED")
         initializePermanentObjects()
+        
     }
     
     private func initializePermanentObjects(){
@@ -41,8 +30,8 @@ class loadScene: SKScene, SKPhysicsContactDelegate {
         ball?.physicsBody?.isDynamic = true
         ball?.physicsBody?.affectedByGravity = true
         ball?.physicsBody?.categoryBitMask = CollisionMasks.ball
-        ball?.physicsBody?.collisionBitMask = CollisionMasks.wall |  CollisionMasks.enemy
-        ball?.physicsBody?.contactTestBitMask = CollisionMasks.wall | CollisionMasks.enemy
+        ball?.physicsBody?.collisionBitMask = CollisionMasks.wall
+        ball?.physicsBody?.contactTestBitMask = CollisionMasks.wall
         ball?.zPosition = 2
         
         topWall = self.childNode(withName: "//topWall") as? SKSpriteNode
@@ -78,14 +67,14 @@ class loadScene: SKScene, SKPhysicsContactDelegate {
     }
     
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
-        if let instruction = childNode(withName: "//instruction"){
-            let fade = SKAction.fadeIn(withDuration: TimeInterval(1.5))
-            
-            instruction.run(fade){
+        if self.scene is LoadScene{
+            if let instruction = childNode(withName: "//instruction"), let logo = childNode(withName: "logo"){
+                instruction.removeFromParent()
+                logo.removeFromParent()
+                
                 let gameScene = SKScene(fileNamed: "GameScene")
                 self.view?.presentScene(gameScene)
             }
-            
         }
     }
 }

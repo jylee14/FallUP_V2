@@ -42,9 +42,12 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     private var enemyAction: SKAction?
     
     override func didMove(to view: SKView) {
+        print("GAMESCENE LOADED")
+        
         self.physicsWorld.contactDelegate = self
         self.scaleMode = .aspectFill  //added to scale to fit
         gameFrame = view.frame.size
+        isPlaying = true
         
         scoreNode.color = SKColor.white
         scoreNode.position = CGPoint(x: self.frame.midX, y: self.frame.midY + 100)
@@ -97,6 +100,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     private func deactivateAllPermanentObjects(){
         ball?.physicsBody?.affectedByGravity = false
         ball?.physicsBody?.isDynamic = false
+        enemyAction = SKAction()
     }
     
     //will change later to spawn all enemy types, not just walls
@@ -185,8 +189,6 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         if isPlaying{
             changeBallGravity()
-        }else{
-            self.view?.presentScene(SKScene(fileNamed: "loadScene"))
         }
     }
 }
