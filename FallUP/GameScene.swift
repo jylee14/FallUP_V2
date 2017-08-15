@@ -14,6 +14,7 @@ struct CollisionMasks{
     static let wall:UInt32 = 0x1 << 2
     static let enemy:UInt32 = 0x1 << 3
     static let endWall:UInt32 = 0x1 << 4
+    static let passThrough:UInt32 = 0x1 << 5
 }
 
 class GameScene: SKScene, SKPhysicsContactDelegate {
@@ -21,38 +22,55 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     private var ball: SKSpriteNode?  //player's character
     private var topWall: SKSpriteNode?  //top wall
     private var botWall: SKSpriteNode?  //bottom wall
-    private var endWall: SKSpriteNode?  //end of the map 
+    private var endWall: SKSpriteNode?  //end of the map
     
-    private var badWalls: SKNode?   //bad wall that player needs to avoid
-    private var bombs: SKNode?  //miniature squares that the player needs to avoid
+    private var enemies: SKNode?   //bad wall that player needs to avoid
+    private var scoreNode = SKLabelNode()
+    
     
     //game logic variables
     private var isBlue = true
     private var isPlaying = false
-    private let badWallSize = CGSize(width: 50, height: 200)
     private var gameFrame: CGSize?
+    private var score:UInt32 = 0   //starts at 0
+    
+    private let bombSize = CGSize(width: 50, height: 50)
+    private let badWallSize = CGSize(width: 50, height: 200)
+    
     
     //game SKActions
-    private var wallAction: SKAction?
+    private var enemyAction: SKAction?
     
     override func didMove(to view: SKView) {
         self.physicsWorld.contactDelegate = self
+        self.scaleMode = .fill  //added to scale to fit
         gameFrame = view.frame.size
+        
+        scoreNode.color = SKColor.white
+        scoreNode.position = CGPoint(x: self.frame.midX, y: self.frame.midY + 100)
+        scoreNode.fontSize = CGFloat(40)
+        scoreNode.text = "\(score)"
+        addChild(scoreNode)
+        
         initializePermanentObjects()
         
         let moveDistance = CGFloat((gameFrame?.width)! + 500)
-        let moveWalls = SKAction.moveBy(x: -moveDistance, y: 0, duration: TimeInterval(2.5))
-        let removeWalls = SKAction.removeFromParent()
-        wallAction  = SKAction.sequence([moveWalls,removeWalls])
+        let moveEnemies = SKAction.moveBy(x: -moveDistance, y: 0, duration: TimeInterval(2.5))
+        let removeEnemies = SKAction.removeFromParent()
+        enemyAction  = SKAction.sequence([moveEnemies,removeEnemies])
         
         let spawnAction = SKAction.run({[weak self = self] in self?.spawnEnemyWalls()})
-        let spawnDelay = SKAction.wait(forDuration: TimeInterval(2.5))
-        let wallSpawn = SKAction.repeatForever(SKAction.sequence([spawnAction, spawnDelay]))
-        run(wallSpawn)
+        let spawnDelay = SKAction.wait(forDuration: TimeInterval(1.25))
+        let enemySpawn = SKAction.repeatForever(SKAction.sequence([spawnAction, spawnDelay]))
+        run(enemySpawn)
+        
     }
     
     private func initializePermanentObjects(){
         ball = self.childNode(withName: "//ball") as? SKSpriteNode
+        ball?.physicsBody = SKPhysicsBody(circleOfRadius: 20)
+        ball?.physicsBody?.isDynamic = true
+        ball?.physicsBody?.affectedByGravity = true
         ball?.physicsBody?.categoryBitMask = CollisionMasks.ball
         ball?.physicsBody?.collisionBitMask = CollisionMasks.wall |  CollisionMasks.enemy
         ball?.physicsBody?.contactTestBitMask = CollisionMasks.wall | CollisionMasks.enemy
@@ -83,51 +101,50 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     
     //will change later to spawn all enemy types, not just walls
     private func spawnEnemyWalls(){
-        let randomY = CGFloat(arc4random_uniform(10))
-        let enemyWallSet = SKNode()
-        enemyWallSet.physicsBody?.affectedByGravity = false
-        enemyWallSet.physicsBody?.isDynamic = false
-        enemyWallSet.physicsBody?.categoryBitMask = CollisionMasks.enemy
-        enemyWallSet.physicsBody?.collisionBitMask = CollisionMasks.ball | CollisionMasks.endWall
-        enemyWallSet.physicsBody?.contactTestBitMask = CollisionMasks.ball | CollisionMasks.endWall
+        enemies = SKNode()
+        let randomY = CGFloat(arc4random_uniform(125))
         
-        let enemyWall1 = SKSpriteNode(imageNamed: "botRect")
-        enemyWall1.size = badWallSize
-        enemyWall1.position = CGPoint(x: (gameFrame?.width)! + 50, y: randomY + 250)
-        enemyWall1.physicsBody = SKPhysicsBody(rectangleOf: badWallSize)
-        enemyWall1.physicsBody?.affectedByGravity = false
-        enemyWall1.physicsBody?.isDynamic = false
-        enemyWall1.physicsBody?.categoryBitMask = CollisionMasks.enemy
-        enemyWall1.physicsBody?.collisionBitMask = CollisionMasks.ball | CollisionMasks.endWall
-        enemyWall1.physicsBody?.contactTestBitMask = CollisionMasks.ball | CollisionMasks.endWall
+        let passNode = SKSpriteNode()   //need to check if the player passes through
+        let enemy1 = spawnEnemies(Int(arc4random_uniform(score % 3)))   //bomb or wall?
+        let enemy2 = spawnEnemies(Int(arc4random_uniform(score % 3)))   //bomb or wall?
         
-        let enemyWall2 = SKSpriteNode(imageNamed: "botRect")
-        enemyWall2.size = badWallSize
-        enemyWall2.position = CGPoint(x: (gameFrame?.width)! + 50, y: randomY)
-        enemyWall2.physicsBody?.affectedByGravity = false
-        enemyWall2.physicsBody?.isDynamic = false
-        enemyWall2.physicsBody?.categoryBitMask = CollisionMasks.enemy
-        enemyWall2.physicsBody?.collisionBitMask = CollisionMasks.ball | CollisionMasks.endWall
-        enemyWall2.physicsBody?.contactTestBitMask = CollisionMasks.ball | CollisionMasks.endWall
+        enemy1.position = CGPoint(x: (gameFrame?.width)! + 50, y: randomY + 150)
+        enemy2.position = CGPoint(x: (gameFrame?.width)! + 50, y: randomY - 150)
+        passNode.position = CGPoint(x: enemy1.position.x, y: 0)
         
-        enemyWallSet.addChild(enemyWall1)
-        enemyWallSet.addChild(enemyWall2)
-        enemyWallSet.zPosition = 0
+        passNode.size = CGSize(width: 1, height: (gameFrame?.height)!)
+        passNode.physicsBody = SKPhysicsBody(rectangleOf: passNode.size)
+        passNode.physicsBody?.isDynamic = false
+        passNode.physicsBody?.affectedByGravity = false
+        passNode.physicsBody?.categoryBitMask = CollisionMasks.passThrough
+        passNode.physicsBody?.collisionBitMask = CollisionMasks.ball
+        passNode.physicsBody?.contactTestBitMask = CollisionMasks.ball
         
-        enemyWallSet.run(wallAction!)
-        addChild(enemyWallSet)
+        enemies?.addChild(enemy1)
+        enemies?.addChild(enemy2)
+        enemies?.addChild(passNode)
+        enemies?.zPosition = 0
+        enemies?.run(enemyAction!)
+        addChild(enemies!)
     }
     
     private func spawnEnemies(_ enemyCode: Int)->SKSpriteNode{
         let enemy: SKSpriteNode
-        if enemyCode == 0{
+        if enemyCode < 5{
             enemy = SKSpriteNode(imageNamed: "bomb")
-            
+            enemy.size = bombSize
+            enemy.physicsBody = SKPhysicsBody(rectangleOf: bombSize)
         }else{
             enemy = SKSpriteNode(imageNamed: "botRect")
             enemy.size = badWallSize
             enemy.physicsBody = SKPhysicsBody(rectangleOf: badWallSize)
         }
+        
+        enemy.physicsBody?.isDynamic = false
+        enemy.physicsBody?.affectedByGravity = false
+        enemy.physicsBody?.categoryBitMask = CollisionMasks.enemy
+        enemy.physicsBody?.collisionBitMask = CollisionMasks.ball
+        enemy.physicsBody?.contactTestBitMask = CollisionMasks.ball
         
         return enemy
     }
@@ -135,23 +152,18 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     func didBegin(_ contact: SKPhysicsContact) {
         let char1 = contact.bodyA
         let char2 = contact.bodyB
-        /*
+        
         if char1.categoryBitMask | char2.categoryBitMask == CollisionMasks.ball | CollisionMasks.wall{
             changeBallGravity()
         }
-        */
-        if char1.categoryBitMask == CollisionMasks.endWall{
-            if let enemies = char1.node?.children{
-                for node in enemies{
-                    node.removeFromParent()
-                }
-            }
-        }else if char2.categoryBitMask == CollisionMasks.endWall{
-            if let enemies = char2.node?.children{
-                for node in enemies{
-                    node.removeFromParent()
-                }
-            }
+        
+        if char1.categoryBitMask | char2.categoryBitMask == CollisionMasks.ball | CollisionMasks.passThrough {
+            score += 1
+            scoreNode.text = String(score)
+        }
+        
+        if char1.categoryBitMask | char2.categoryBitMask == CollisionMasks.ball | CollisionMasks.enemy{
+            
         }
         
     }
@@ -159,10 +171,12 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     private func changeBallGravity(){
         if isBlue{
             ball?.texture = SKTexture(imageNamed: "orangeBall")
+            ball?.physicsBody?.applyImpulse(CGVector(dx: 0, dy: 2.0))
             self.physicsWorld.gravity = CGVector(dx: 0.0, dy: 5.0)
             isBlue = false
         }else{
             ball?.texture = SKTexture(imageNamed: "blueBall")
+            ball?.physicsBody?.applyImpulse(CGVector(dx: 0, dy: -2.0))
             self.physicsWorld.gravity = CGVector(dx: 0.0, dy: -5.0)
             isBlue = true
         }
