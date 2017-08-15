@@ -18,18 +18,24 @@ struct CollisionMasks{
 class GameScene: SKScene, SKPhysicsContactDelegate {
     //in game sprites
     private var ball: SKSpriteNode?  //player's character
-    private var bomb: SKSpriteNode?  //miniature squares that the player needs to avoid
     private var topWall: SKSpriteNode?   //top wall
     private var botWall: SKSpriteNode?   //bottom wall
-    private var badWall: SKSpriteNode?   //bad wall that player needs to avoid
+    
+    private var badWalls: SKNode?   //bad wall that player needs to avoid
+    private var bombs: SKNode?  //miniature squares that the player needs to avoid
     
     //game logic variables
     private var isBlue = true
-    private var gameStarted = false
+    private var isPlaying = false
     
     override func didMove(to view: SKView) {
         self.physicsWorld.contactDelegate = self
+        initializePermanentObjects()
         
+        
+    }
+    
+    private func initializePermanentObjects(){
         ball = self.childNode(withName: "//ball") as? SKSpriteNode
         ball?.physicsBody?.categoryBitMask = CollisionMasks.ball
         ball?.physicsBody?.collisionBitMask = CollisionMasks.wall |  CollisionMasks.enemy
@@ -44,15 +50,23 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         botWall?.physicsBody?.categoryBitMask = CollisionMasks.wall
         botWall?.physicsBody?.collisionBitMask = CollisionMasks.ball
         botWall?.physicsBody?.contactTestBitMask = CollisionMasks.ball
-        
+    }
+    
+    private func deactivateAllPermanentObjects(){
+        ball?.physicsBody?.affectedByGravity = false
+        ball?.physicsBody?.isDynamic = false
     }
     
     func didBegin(_ contact: SKPhysicsContact) {
         let char1 = contact.bodyA
         let char2 = contact.bodyB
         
-        if char1.categoryBitMask == CollisionMasks.ball && char2.categoryBitMask == CollisionMasks.wall {
-            changeBallGravity()
+        if char1.categoryBitMask == CollisionMasks.ball {
+            if char2.categoryBitMask == CollisionMasks.wall {
+                changeBallGravity()
+            }else{
+                isPlaying = false
+            }
         }
     }
     
@@ -69,10 +83,10 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     }
     
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
-        if gameStarted{
+        if isPlaying{
             changeBallGravity()
         }else{
-            gameStarted = true
+            isPlaying = true
         }
     }
     
