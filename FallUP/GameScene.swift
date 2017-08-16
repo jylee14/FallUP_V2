@@ -22,7 +22,6 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     private var ball: SKSpriteNode?  //player's character
     private var topWall: SKSpriteNode?  //top wall
     private var botWall: SKSpriteNode?  //bottom wall
-    private var endWall: SKSpriteNode?  //end of the map
     
     private var enemies: SKNode?   //bad wall that player needs to avoid
     private var scoreNode = SKLabelNode()
@@ -74,8 +73,8 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         ball?.physicsBody?.isDynamic = true
         ball?.physicsBody?.affectedByGravity = true
         ball?.physicsBody?.categoryBitMask = CollisionMasks.ball
-        ball?.physicsBody?.collisionBitMask = CollisionMasks.wall |  CollisionMasks.enemy | CollisionMasks.endWall
-        ball?.physicsBody?.contactTestBitMask = CollisionMasks.wall | CollisionMasks.enemy | CollisionMasks.endWall
+        ball?.physicsBody?.collisionBitMask = CollisionMasks.wall |  CollisionMasks.enemy
+        ball?.physicsBody?.contactTestBitMask = CollisionMasks.wall | CollisionMasks.enemy
         ball?.zPosition = 2
         
         topWall = self.childNode(withName: "//topWall") as? SKSpriteNode
@@ -89,11 +88,6 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         botWall?.physicsBody?.collisionBitMask = CollisionMasks.ball
         botWall?.physicsBody?.contactTestBitMask = CollisionMasks.ball
         botWall?.zPosition = 3
-        
-        endWall = self.childNode(withName: "//endWall") as? SKSpriteNode
-        endWall?.physicsBody?.categoryBitMask = CollisionMasks.endWall
-        endWall?.physicsBody?.collisionBitMask = CollisionMasks.enemy | CollisionMasks.ball
-        endWall?.physicsBody?.contactTestBitMask = CollisionMasks.enemy | CollisionMasks.ball
     }
     
     private func deactivateAllPermanentObjects(){
@@ -169,15 +163,22 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             scoreNode.text = String(score)
         }
         
-        if char1.categoryBitMask | char2.categoryBitMask == CollisionMasks.ball | CollisionMasks.endWall{
-            self.removeAllChildren()
-            self.removeAllActions()
+        if char1.categoryBitMask | char2.categoryBitMask == CollisionMasks.ball | CollisionMasks.enemy{
             isPlaying = false
             
+            self.removeAllActions()
+            
             let gameOver = SKLabelNode(text: "GAME OVER!")
+            let scoreBoard = SKLabelNode()
+            
             gameOver.fontSize = CGFloat(45)
-            gameOver.position = CGPoint(x: frame.midX, y: frame.midY)
+            gameOver.position = CGPoint(x: frame.midX, y: frame.midY + 50)
+            scoreBoard.fontSize = CGFloat(45)
+            scoreBoard.position = CGPoint(x: frame.midX, y: frame.midY)
+            scoreBoard.text = "SCORE: \(score)"
+            
             self.addChild(gameOver)
+            self.addChild(scoreBoard)
         }
         
     }
