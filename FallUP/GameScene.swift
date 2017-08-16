@@ -90,12 +90,6 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         botWall?.zPosition = 3
     }
     
-    private func deactivateAllPermanentObjects(){
-        ball?.physicsBody?.affectedByGravity = false
-        ball?.physicsBody?.isDynamic = false
-        enemyAction = SKAction()
-    }
-    
     //will change later to spawn all enemy types, not just walls
     private func spawnEnemyWalls(){
         enemies = SKNode()
@@ -167,9 +161,10 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         }
         
         if char1.categoryBitMask | char2.categoryBitMask == CollisionMasks.ball | CollisionMasks.enemy{
+            if isPlaying { cleanUpWalls() }
             isPlaying = false
             scoreNode.removeFromParent()
-    
+            
             self.removeAllActions()
             
             let gameOver = SKLabelNode(text: "GAME OVER!")
@@ -184,7 +179,19 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             self.addChild(gameOver)
             self.addChild(scoreBoard)
         }
+    }
+    
+    private func cleanUpWalls(){
+        let cleanUpWall = SKNode()
+        let cleanUp1 = spawnEnemies(50)
+        let cleanUp2 = spawnEnemies(50)
+        cleanUp1.position = CGPoint(x: frame.width + 50, y: frame.midY + 125)
+        cleanUp2.position = CGPoint(x: frame.width + 50, y: frame.midY - 125)
         
+        cleanUpWall.addChild(cleanUp1)
+        cleanUpWall.addChild(cleanUp2)
+        cleanUpWall.run(enemyAction!)
+        addChild(cleanUpWall)
     }
     
     private func changeBallGravity(){
