@@ -18,53 +18,21 @@ class LoadScene: SKScene, SKPhysicsContactDelegate{
     
     override func didMove(to view: SKView) {
         self.physicsWorld.contactDelegate = self
-        
-        print("LOADSCENE LOADED")
         initializePermanentObjects()
-        
     }
     
     private func initializePermanentObjects(){
         ball = self.childNode(withName: "//ball") as? SKSpriteNode
         ball?.physicsBody = SKPhysicsBody(circleOfRadius: 20)
-        ball?.physicsBody?.isDynamic = true
-        ball?.physicsBody?.affectedByGravity = true
-        ball?.physicsBody?.categoryBitMask = CollisionMasks.ball
-        ball?.physicsBody?.collisionBitMask = CollisionMasks.wall
-        ball?.physicsBody?.contactTestBitMask = CollisionMasks.wall
         ball?.zPosition = 2
         
         topWall = self.childNode(withName: "//topWall") as? SKSpriteNode
-        topWall?.physicsBody?.categoryBitMask = CollisionMasks.wall
-        topWall?.physicsBody?.collisionBitMask = CollisionMasks.ball
-        topWall?.physicsBody?.contactTestBitMask = CollisionMasks.ball
         topWall?.zPosition = 3
         
         botWall = self.childNode(withName: "//botWall") as? SKSpriteNode
-        botWall?.physicsBody?.categoryBitMask = CollisionMasks.wall
-        botWall?.physicsBody?.collisionBitMask = CollisionMasks.ball
-        botWall?.physicsBody?.contactTestBitMask = CollisionMasks.ball
         botWall?.zPosition = 3
     }
     
-    
-    func didBegin(_ contact: SKPhysicsContact) {
-        changeBallGravity()
-    }
-    
-    private func changeBallGravity(){
-        if isBlue{
-            ball?.texture = SKTexture(imageNamed: "orangeBall")
-            ball?.physicsBody?.applyImpulse(CGVector(dx: 0, dy: 2.5))
-            self.physicsWorld.gravity = CGVector(dx: 0.0, dy: 5.0)
-            isBlue = false
-        }else{
-            ball?.texture = SKTexture(imageNamed: "blueBall")
-            ball?.physicsBody?.applyImpulse(CGVector(dx: 0, dy: -2.5))
-            self.physicsWorld.gravity = CGVector(dx: 0.0, dy: -5.0)
-            isBlue = true
-        }
-    }
     
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         if self.scene is LoadScene{
@@ -72,8 +40,9 @@ class LoadScene: SKScene, SKPhysicsContactDelegate{
                 instruction.removeFromParent()
                 logo.removeFromParent()
                 
+                let fade = SKTransition.fade(withDuration: TimeInterval(1.5))
                 let gameScene = SKScene(fileNamed: "GameScene")
-                self.view?.presentScene(gameScene)
+                self.view?.presentScene(gameScene!, transition: fade)
             }
         }
     }
