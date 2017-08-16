@@ -43,13 +43,15 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     
     override func didMove(to view: SKView) {
         self.physicsWorld.contactDelegate = self
-        self.scaleMode = .fill  //added to scale to fit
+        self.scaleMode = .aspectFill  //added to scale to fit
         gameFrame = view.frame.size
+        isPlaying = true
         
         scoreNode.color = SKColor.white
         scoreNode.position = CGPoint(x: self.frame.midX, y: self.frame.midY + 100)
         scoreNode.fontSize = CGFloat(40)
         scoreNode.text = "\(score)"
+        scoreNode.zPosition = 5
         addChild(scoreNode)
         
         initializePermanentObjects()
@@ -72,8 +74,8 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         ball?.physicsBody?.isDynamic = true
         ball?.physicsBody?.affectedByGravity = true
         ball?.physicsBody?.categoryBitMask = CollisionMasks.ball
-        ball?.physicsBody?.collisionBitMask = CollisionMasks.wall |  CollisionMasks.enemy
-        ball?.physicsBody?.contactTestBitMask = CollisionMasks.wall | CollisionMasks.enemy
+        ball?.physicsBody?.collisionBitMask = CollisionMasks.wall |  CollisionMasks.enemy | CollisionMasks.endWall
+        ball?.physicsBody?.contactTestBitMask = CollisionMasks.wall | CollisionMasks.enemy | CollisionMasks.endWall
         ball?.zPosition = 2
         
         topWall = self.childNode(withName: "//topWall") as? SKSpriteNode
@@ -90,13 +92,14 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         
         endWall = self.childNode(withName: "//endWall") as? SKSpriteNode
         endWall?.physicsBody?.categoryBitMask = CollisionMasks.endWall
-        endWall?.physicsBody?.collisionBitMask = CollisionMasks.enemy
-        endWall?.physicsBody?.contactTestBitMask = CollisionMasks.enemy
+        endWall?.physicsBody?.collisionBitMask = CollisionMasks.enemy | CollisionMasks.ball
+        endWall?.physicsBody?.contactTestBitMask = CollisionMasks.enemy | CollisionMasks.ball
     }
     
     private func deactivateAllPermanentObjects(){
         ball?.physicsBody?.affectedByGravity = false
         ball?.physicsBody?.isDynamic = false
+        enemyAction = SKAction()
     }
     
     //will change later to spawn all enemy types, not just walls
@@ -105,11 +108,11 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         let randomY = CGFloat(arc4random_uniform(125))
         
         let passNode = SKSpriteNode()   //need to check if the player passes through
-        let enemy1 = spawnEnemies(Int(arc4random_uniform(score % 3)))   //bomb or wall?
-        let enemy2 = spawnEnemies(Int(arc4random_uniform(score % 3)))   //bomb or wall?
+        let enemy1 = spawnEnemies(Int(arc4random_uniform(score / 4)))   //bomb or wall?
+        let enemy2 = spawnEnemies(Int(arc4random_uniform(score / 4)))   //bomb or wall?
         
-        enemy1.position = CGPoint(x: (gameFrame?.width)! + 50, y: randomY + 150)
-        enemy2.position = CGPoint(x: (gameFrame?.width)! + 50, y: randomY - 150)
+        enemy1.position = CGPoint(x: (gameFrame?.width)! + 50, y: randomY + 170)
+        enemy2.position = CGPoint(x: (gameFrame?.width)! + 50, y: randomY - 170)
         passNode.position = CGPoint(x: enemy1.position.x, y: 0)
         
         passNode.size = CGSize(width: 1, height: (gameFrame?.height)!)
@@ -130,7 +133,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     
     private func spawnEnemies(_ enemyCode: Int)->SKSpriteNode{
         let enemy: SKSpriteNode
-        if enemyCode < 5{
+        if enemyCode < 2{
             enemy = SKSpriteNode(imageNamed: "bomb")
             enemy.size = bombSize
             enemy.physicsBody = SKPhysicsBody(rectangleOf: bombSize)
@@ -142,6 +145,10 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         
         enemy.physicsBody?.isDynamic = false
         enemy.physicsBody?.affectedByGravity = false
+        enemy.physicsBody?.restitution = 0.0
+        enemy.physicsBody?.friction = 0.0
+        enemy.physicsBody?.linearDamping = 0.0
+        enemy.physicsBody?.angularDamping = 0.0
         enemy.physicsBody?.categoryBitMask = CollisionMasks.enemy
         enemy.physicsBody?.collisionBitMask = CollisionMasks.ball
         enemy.physicsBody?.contactTestBitMask = CollisionMasks.ball
@@ -162,8 +169,15 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             scoreNode.text = String(score)
         }
         
-        if char1.categoryBitMask | char2.categoryBitMask == CollisionMasks.ball | CollisionMasks.enemy{
+        if char1.categoryBitMask | char2.categoryBitMask == CollisionMasks.ball | CollisionMasks.endWall{
+            self.removeAllChildren()
+            self.removeAllActions()
+            isPlaying = false
             
+            let gameOver = SKLabelNode(text: "GAME OVER!")
+            gameOver.fontSize = CGFloat(45)
+            gameOver.position = CGPoint(x: frame.midX, y: frame.midY)
+            self.addChild(gameOver)
         }
         
     }
@@ -183,6 +197,14 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     }
     
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
-        changeBallGravity()
+        if isPlaying{
+            changeBallGravity()
+        }else{
+            let fade = SKTransition.fade(withDuration: TimeInterval(1.5))
+            let gameScene = SKScene(fileNamed: "GameScene")
+            self.view?.presentScene(gameScene!, transition: fade)
+            
+            score = 0
+        }
     }
 }
