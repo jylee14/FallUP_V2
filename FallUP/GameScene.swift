@@ -104,9 +104,11 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         let passNode = SKSpriteNode()   //need to check if the player passes through
         let enemy1 = spawnEnemies(Int(arc4random_uniform(score / 4)))   //bomb or wall?
         let enemy2 = spawnEnemies(Int(arc4random_uniform(score / 4)))   //bomb or wall?
+        let enemy3 = spawnEnemies(Int(arc4random_uniform(score / 4)))   //maybe we need the 3rd obj
         
         enemy1.position = CGPoint(x: (gameFrame?.width)! + 50, y: randomY + 170)
         enemy2.position = CGPoint(x: (gameFrame?.width)! + 50, y: randomY - 170)
+        enemy3.position = CGPoint(x: (gameFrame?.width)! + 50, y: frame.midY + 50)
         passNode.position = CGPoint(x: enemy1.position.x, y: 0)
         
         passNode.size = CGSize(width: 1, height: (gameFrame?.height)!)
@@ -119,6 +121,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         
         enemies?.addChild(enemy1)
         enemies?.addChild(enemy2)
+        enemies?.addChild(enemy3)
         enemies?.addChild(passNode)
         enemies?.zPosition = 0
         enemies?.run(enemyAction!)
@@ -154,18 +157,19 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         let char1 = contact.bodyA
         let char2 = contact.bodyB
         
-        if char1.categoryBitMask | char2.categoryBitMask == CollisionMasks.ball | CollisionMasks.wall{
+        if char1.categoryBitMask | char2.categoryBitMask == CollisionMasks.ball | CollisionMasks.wall && isPlaying {
             changeBallGravity()
         }
         
-        if char1.categoryBitMask | char2.categoryBitMask == CollisionMasks.ball | CollisionMasks.passThrough {
+        if char1.categoryBitMask | char2.categoryBitMask == CollisionMasks.ball | CollisionMasks.passThrough && isPlaying {
             score += 1
             scoreNode.text = String(score)
         }
         
         if char1.categoryBitMask | char2.categoryBitMask == CollisionMasks.ball | CollisionMasks.enemy{
             isPlaying = false
-            
+            scoreNode.removeFromParent()
+    
             self.removeAllActions()
             
             let gameOver = SKLabelNode(text: "GAME OVER!")
