@@ -33,7 +33,6 @@ class LoadScene: SKScene, SKPhysicsContactDelegate{
         botWall?.zPosition = 3
     }
     
-    
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         if self.scene is LoadScene{
             if let instruction = childNode(withName: "//instruction"), let logo = childNode(withName: "logo"){
