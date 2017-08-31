@@ -56,7 +56,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         initializePermanentObjects()
         
         let moveDistance = CGFloat((gameFrame?.width)! + 500)
-        let moveEnemies = SKAction.moveBy(x: -moveDistance, y: 0, duration: TimeInterval(2.5))
+        let moveEnemies = SKAction.moveBy(x: -moveDistance, y: 0, duration: TimeInterval(2.75 - 0.003 * Double(score)))
         let removeEnemies = SKAction.removeFromParent()
         enemyAction  = SKAction.sequence([moveEnemies,removeEnemies])
         
