@@ -9,6 +9,7 @@
 import SpriteKit
 import GameplayKit
 
+/* struct that contains the collision masks for in-game objects */
 struct CollisionMasks{
     static let ball:UInt32 = 0x1 << 1
     static let wall:UInt32 = 0x1 << 2
@@ -40,9 +41,12 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     //game SKActions
     private var enemyAction: SKAction?
     
+    /* this scene came into existence */
     override func didMove(to view: SKView) {
         self.physicsWorld.contactDelegate = self
-        self.scaleMode = .aspectFill  //added to scale to fit
+        scene!.anchorPoint = CGPoint(x: 0, y: 0)
+        scene!.scaleMode = SKSceneScaleMode.fill   //added to scale to fit, will crash if it fails
+        
         gameFrame = view.frame.size
         isPlaying = true
         
@@ -60,15 +64,21 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         let removeEnemies = SKAction.removeFromParent()
         enemyAction  = SKAction.sequence([moveEnemies,removeEnemies])
         
-        let spawnAction = SKAction.run({[weak self = self] in self?.spawnEnemyWalls()})
+        let spawnAction = SKAction.run({[weak self = self] in self?.spawnEnemyObjects()})
         let spawnDelay = SKAction.wait(forDuration: TimeInterval(1.25))
         let enemySpawn = SKAction.repeatForever(SKAction.sequence([spawnAction, spawnDelay]))
         run(enemySpawn)
         
     }
     
+    /* 
+     * initialize the properties of the in-game permanent objects and place them in appropriate
+     * position within the scene based on the size of the device that is playing the game 
+     */
     private func initializePermanentObjects(){
         ball = self.childNode(withName: "//ball") as? SKSpriteNode
+        ball?.size = CGSize(width: 40, height: 40)
+        ball?.position = CGPoint(x: size.width/8, y: size.height/2)
         ball?.physicsBody = SKPhysicsBody(circleOfRadius: 20)
         ball?.physicsBody?.isDynamic = true
         ball?.physicsBody?.affectedByGravity = true
@@ -78,32 +88,33 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         ball?.zPosition = 2
         
         topWall = self.childNode(withName: "//topWall") as? SKSpriteNode
+        topWall?.size = CGSize(width: size.width, height: 30)
+        topWall?.position = CGPoint(x: size.width/2, y: size.height)
         topWall?.physicsBody?.categoryBitMask = CollisionMasks.wall
         topWall?.physicsBody?.collisionBitMask = CollisionMasks.ball
         topWall?.physicsBody?.contactTestBitMask = CollisionMasks.ball
         topWall?.zPosition = 3
         
         botWall = self.childNode(withName: "//botWall") as? SKSpriteNode
+        botWall?.size = CGSize(width: size.width, height: 30)
+        botWall?.position = CGPoint(x: size.width/2, y: 0)
         botWall?.physicsBody?.categoryBitMask = CollisionMasks.wall
         botWall?.physicsBody?.collisionBitMask = CollisionMasks.ball
         botWall?.physicsBody?.contactTestBitMask = CollisionMasks.ball
         botWall?.zPosition = 3
     }
     
-    //will change later to spawn all enemy types, not just walls
-    private func spawnEnemyWalls(){
+    /* 
+     * function that gets called to spawn different enemy objects in the game
+     * along with invisible line that tracks the score 
+     */
+    private func spawnEnemyObjects(){
         enemies = SKNode()
-        let randomY = CGFloat(arc4random_uniform(125))
+        let halfHeight = UInt32(size.height/2)
+        let randomY = CGFloat(arc4random_uniform(UInt32(halfHeight)))
         
         let passNode = SKSpriteNode()   //need to check if the player passes through
-        let enemy1 = spawnEnemies(Int(arc4random_uniform(score / 4)))   //bomb or wall?
-        let enemy2 = spawnEnemies(Int(arc4random_uniform(score / 4)))   //bomb or wall?
-        
-        enemy1.position = CGPoint(x: (gameFrame?.width)! + 50, y: randomY + 170)
-        enemy2.position = CGPoint(x: (gameFrame?.width)! + 50, y: randomY - 170)
-        passNode.position = CGPoint(x: enemy1.position.x, y: 0)
-        
-        passNode.size = CGSize(width: 1, height: (gameFrame?.height)!)
+        passNode.size = CGSize(width: 1, height: size.height)
         passNode.physicsBody = SKPhysicsBody(rectangleOf: passNode.size)
         passNode.physicsBody?.isDynamic = false
         passNode.physicsBody?.affectedByGravity = false
@@ -111,14 +122,24 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         passNode.physicsBody?.collisionBitMask = CollisionMasks.ball
         passNode.physicsBody?.contactTestBitMask = CollisionMasks.ball
         
+        let enemy1 = spawnEnemies(Int(arc4random_uniform(score / 4)))   //bomb or wall?
+        let enemy2 = spawnEnemies(Int(arc4random_uniform(score / 4)))   //bomb or wall?
+        
+        let position1 = CGFloat(halfHeight) + randomY //position for enemy1
+        enemy1.position = CGPoint(x: (gameFrame?.width)! + 50, y: position1)
+        enemy2.position = CGPoint(x: (gameFrame?.width)! + 50, y: position1 - (1.5 * randomY))
+        passNode.position = CGPoint(x: enemy1.position.x, y: size.height/2)
+        
         enemies?.addChild(enemy1)
         enemies?.addChild(enemy2)
         
+        /*
         if enemy1.size != badWallSize && enemy2.size != badWallSize { //maybe we need the 3rd obj
             let enemy3 = spawnEnemies(Int(arc4random_uniform(score / 4)))
             enemy3.position = CGPoint(x: (gameFrame?.width)! + 50, y: frame.midY + 50)
             enemies?.addChild(enemy3)
         }
+        */
         
         enemies?.addChild(passNode)
         enemies?.zPosition = 0
@@ -126,6 +147,11 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         addChild(enemies!)
     }
     
+    /*
+     * function that actually does the spawning based on random number that gets passed into the function 
+     * this will spawn the appropriate enemy object as well as setting the physics body and the sizes of the objects
+     * before passing the object back to the calling function
+     */
     private func spawnEnemies(_ enemyCode: Int)->SKSpriteNode{
         let enemy: SKSpriteNode
         if enemyCode < 2{
@@ -151,6 +177,9 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         return enemy
     }
     
+    /*
+     * SKPhysicsBody delegate method
+     */
     func didBegin(_ contact: SKPhysicsContact) {
         let char1 = contact.bodyA
         let char2 = contact.bodyB
@@ -185,10 +214,14 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         }
     }
     
+    /*
+     * function that gets called after the game is over
+     * spawns walls that will sweep through everything in the scene
+     */
     private func cleanUpWalls(){
         let cleanUpWall = SKNode()
-        let cleanUp1 = spawnEnemies(50)
-        let cleanUp2 = spawnEnemies(50)
+        let cleanUp1 = spawnEnemies(Int.max)
+        let cleanUp2 = spawnEnemies(Int.max)
         cleanUp1.position = CGPoint(x: frame.width + 50, y: frame.midY + 125)
         cleanUp2.position = CGPoint(x: frame.width + 50, y: frame.midY - 125)
         
@@ -198,16 +231,17 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         addChild(cleanUpWall)
     }
     
+    /*
+     * change the gravity of the scene
+     */
     private func changeBallGravity(){
         if isBlue{
             ball?.texture = SKTexture(imageNamed: "orangeBall")
-            ball?.physicsBody?.applyImpulse(CGVector(dx: 0, dy: 2.0))
-            self.physicsWorld.gravity = CGVector(dx: 0.0, dy: 5.0)
+            physicsWorld.gravity = CGVector(dx: 0.0, dy: 4.0)
             isBlue = false
         }else{
             ball?.texture = SKTexture(imageNamed: "blueBall")
-            ball?.physicsBody?.applyImpulse(CGVector(dx: 0, dy: -2.0))
-            self.physicsWorld.gravity = CGVector(dx: 0.0, dy: -5.0)
+            physicsWorld.gravity = CGVector(dx: 0.0, dy: -4.0)
             isBlue = true
         }
     }
@@ -217,8 +251,8 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             changeBallGravity()
         }else{
             let fade = SKTransition.fade(withDuration: TimeInterval(1.5))
-            let gameScene = SKScene(fileNamed: "GameScene")
-            self.view?.presentScene(gameScene!, transition: fade)
+            let loadScene = SKScene(fileNamed: "LoadScene")
+            self.view?.presentScene(loadScene!, transition: fade)
             
             score = 0
         }
