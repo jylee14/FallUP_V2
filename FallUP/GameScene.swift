@@ -83,7 +83,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         let ballSize = size.width/20
         ball = self.childNode(withName: "//ball") as? SKSpriteNode
         ball?.size = CGSize(width: ballSize, height: ballSize)
-        ball?.position = CGPoint(x: size.width/8, y: size.height/2)
+        ball?.position = CGPoint(x: size.width/8, y: size.height * 3/4)
         ball?.physicsBody = SKPhysicsBody(circleOfRadius: ballSize/2)
         ball?.physicsBody?.isDynamic = true
         ball?.physicsBody?.affectedByGravity = true
