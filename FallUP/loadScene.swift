@@ -30,7 +30,7 @@ class LoadScene: SKScene, SKPhysicsContactDelegate{
         let ballSize = size.width/20
         ball = self.childNode(withName: "//ball") as? SKSpriteNode
         ball?.size = CGSize(width: ballSize, height: ballSize)
-        ball?.position = CGPoint(x: size.width/8, y: size.height/2)
+        ball?.position = CGPoint(x: size.width/8, y: size.height * 3/4)
         ball?.physicsBody = SKPhysicsBody(circleOfRadius: ballSize/2)
         ball?.physicsBody?.categoryBitMask = CollisionMasks.ball
         ball?.physicsBody?.collisionBitMask = CollisionMasks.wall
@@ -69,11 +69,11 @@ class LoadScene: SKScene, SKPhysicsContactDelegate{
     private func changeBallGravity(){
         if isBlue{
             ball?.texture = SKTexture(imageNamed: "orangeBall")
-            physicsWorld.gravity = CGVector(dx: 0.0, dy: 4.0)
+            physicsWorld.gravity = CGVector(dx: 0.0, dy: +5.0)
             isBlue = false
         }else{
             ball?.texture = SKTexture(imageNamed: "blueBall")
-            physicsWorld.gravity = CGVector(dx: 0.0, dy: -4.0)
+            physicsWorld.gravity = CGVector(dx: 0.0, dy: -5.0)
             isBlue = true
         }
     }
