@@ -27,8 +27,11 @@ class LoadScene: SKScene, SKPhysicsContactDelegate{
     }
     
     private func initializePermanentObjects(){
+        let ballSize = size.width/20
         ball = self.childNode(withName: "//ball") as? SKSpriteNode
-        ball?.physicsBody = SKPhysicsBody(circleOfRadius: 20)
+        ball?.size = CGSize(width: ballSize, height: ballSize)
+        ball?.position = CGPoint(x: size.width/8, y: size.height/2)
+        ball?.physicsBody = SKPhysicsBody(circleOfRadius: ballSize/2)
         ball?.physicsBody?.categoryBitMask = CollisionMasks.ball
         ball?.physicsBody?.collisionBitMask = CollisionMasks.wall
         ball?.physicsBody?.contactTestBitMask = CollisionMasks.wall

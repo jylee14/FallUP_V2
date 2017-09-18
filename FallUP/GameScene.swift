@@ -56,7 +56,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         isPlaying = true
         
         scoreNode.color = SKColor.white
-        scoreNode.position = CGPoint(x: self.frame.midX, y: self.frame.midY + 100)
+        scoreNode.position = CGPoint(x: size.width/2, y: size.height * 3/4)
         scoreNode.fontSize = CGFloat(40)
         scoreNode.text = "\(score)"
         scoreNode.zPosition = 5
@@ -64,8 +64,8 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         
         initializePermanentObjects()
         
-        let moveDistance = CGFloat((gameFrame?.width)! + 500)
-        let moveEnemies = SKAction.moveBy(x: -moveDistance, y: 0, duration: TimeInterval(2.75 - 0.003 * Double(score)))
+        let moveDistance = CGFloat(size.width + 500)
+        let moveEnemies = SKAction.moveBy(x: -moveDistance, y: 0, duration: TimeInterval(2.75 - 0.00875 * Double(score)))
         let removeEnemies = SKAction.removeFromParent()
         enemyAction  = SKAction.sequence([moveEnemies,removeEnemies])
         
@@ -80,10 +80,11 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
      * position within the scene based on the size of the device that is playing the game
      */
     private func initializePermanentObjects(){
+        let ballSize = size.width/20
         ball = self.childNode(withName: "//ball") as? SKSpriteNode
-        ball?.size = CGSize(width: 40, height: 40)
+        ball?.size = CGSize(width: ballSize, height: ballSize)
         ball?.position = CGPoint(x: size.width/8, y: size.height/2)
-        ball?.physicsBody = SKPhysicsBody(circleOfRadius: 20)
+        ball?.physicsBody = SKPhysicsBody(circleOfRadius: ballSize/2)
         ball?.physicsBody?.isDynamic = true
         ball?.physicsBody?.affectedByGravity = true
         ball?.physicsBody?.categoryBitMask = CollisionMasks.ball
@@ -224,9 +225,10 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             let scoreBoard = SKLabelNode()
             
             gameOver.fontSize = CGFloat(45)
-            gameOver.position = CGPoint(x: frame.midX, y: frame.midY + 50)
+            gameOver.position = CGPoint(x: size.width/2, y: size.height/2 + 50)
+            
             scoreBoard.fontSize = CGFloat(45)
-            scoreBoard.position = CGPoint(x: frame.midX, y: frame.midY)
+            scoreBoard.position = CGPoint(x: size.width/2, y: size.height/2)
             scoreBoard.text = "SCORE: \(score)"
             
             self.addChild(gameOver)
@@ -242,8 +244,8 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         let cleanUpWall = SKNode()
         let cleanUp1 = spawnEnemies(Int.max)
         let cleanUp2 = spawnEnemies(Int.max)
-        cleanUp1.position = CGPoint(x: frame.width + 50, y: frame.midY + 125)
-        cleanUp2.position = CGPoint(x: frame.width + 50, y: frame.midY - 125)
+        cleanUp1.position = CGPoint(x: size.width + 50, y: size.height/2 + 125)
+        cleanUp2.position = CGPoint(x: size.width + 50, y: size.height/2 - 125)
         
         cleanUpWall.addChild(cleanUp1)
         cleanUpWall.addChild(cleanUp2)
