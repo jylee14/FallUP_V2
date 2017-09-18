@@ -34,8 +34,8 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     private var gameFrame: CGSize?
     private var score:UInt32 = 0   //starts at 0
     
-    private let bombSize = CGSize(width: 50, height: 50)
-    private let badWallSize = CGSize(width: 50, height: 200)
+    private var bombSize: CGSize!
+    private var badWallSize: CGSize!
     
     
     //game SKActions
@@ -44,8 +44,13 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     /* this scene came into existence */
     override func didMove(to view: SKView) {
         self.physicsWorld.contactDelegate = self
-        scene!.anchorPoint = CGPoint(x: 0, y: 0)
-        scene!.scaleMode = SKSceneScaleMode.fill   //added to scale to fit, will crash if it fails
+        scene!.anchorPoint = CGPoint(x: 0, y: 0)    //origin is at bottom left
+        scene!.scaleMode = SKSceneScaleMode.fill    //added to scale to fit, will crash if it fails
+        
+        let bombSide = size.height / 8
+        let wallHeight = size.height / 3
+        bombSize = CGSize(width: bombSide, height: bombSide)
+        badWallSize = CGSize(width: bombSide, height: wallHeight)
         
         gameFrame = view.frame.size
         isPlaying = true
@@ -68,12 +73,11 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         let spawnDelay = SKAction.wait(forDuration: TimeInterval(1.25))
         let enemySpawn = SKAction.repeatForever(SKAction.sequence([spawnAction, spawnDelay]))
         run(enemySpawn)
-        
     }
     
-    /* 
+    /*
      * initialize the properties of the in-game permanent objects and place them in appropriate
-     * position within the scene based on the size of the device that is playing the game 
+     * position within the scene based on the size of the device that is playing the game
      */
     private func initializePermanentObjects(){
         ball = self.childNode(withName: "//ball") as? SKSpriteNode
@@ -104,15 +108,53 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         botWall?.zPosition = 3
     }
     
-    /* 
+    /*
      * function that gets called to spawn different enemy objects in the game
-     * along with invisible line that tracks the score 
+     * along with invisible line that tracks the score
      */
     private func spawnEnemyObjects(){
-        enemies = SKNode()
-        let halfHeight = UInt32(size.height/2)
-        let randomY = CGFloat(arc4random_uniform(UInt32(halfHeight)))
+        let startingX = size.width + 50         //starting point for all the spawned nodes
+        let coinFlip1 = arc4random_uniform(2)    //offset determination
+        let coinFlip2 = arc4random_uniform(2)    //offset determination
+        let offset1 = CGFloat(arc4random_uniform(UInt32(size.height/4))) - size.height/8   //how much the spawned enemy objects will move in y-axis
+        let offset2 = CGFloat(arc4random_uniform(UInt32(size.height/4))) - size.height/8   //how much the spawned enemy objects will move in y-axis
         
+        let passNode = spawnDetector()  //get the detectorNode
+        let enemy1 = spawnEnemies(Int(arc4random_uniform(score / 4)))   //bomb or wall?
+        let enemy2 = spawnEnemies(Int(arc4random_uniform(score / 4)))   //bomb or wall?
+        
+        let yPosition1 = size.height/4 + (coinFlip1 == 1 ? +offset1 : -offset1)     //position for enemy1 will be in the bottom half of the screen
+        let yPosition2 = size.height * 3/4 + (coinFlip2 == 1 ? +offset2 : -offset2) //position for enemy2 will be in the top half of the screen
+        
+        enemy1.position = CGPoint(x: startingX, y: yPosition1)
+        enemy2.position = CGPoint(x: startingX, y: yPosition2)
+        passNode.position = CGPoint(x: startingX, y: size.height/2)
+        
+        enemies = SKNode()  //node to store all the spawned enemies
+        enemies?.addChild(enemy1)
+        enemies?.addChild(enemy2)
+        
+        if enemy1.size != badWallSize && enemy2.size != badWallSize { //maybe we need the 3rd obj
+            if abs(yPosition1 - yPosition2) > (4 * bombSize.height){ //if the difference in position is greater than k bomb objects, add the 3rd
+                let enemy3 = spawnEnemies(0)    //if there's a 3rd object, its going to be a bomb object
+                let offset = CGFloat(arc4random_uniform(35))
+                let coinFlip = arc4random_uniform(2)    //offset determination
+                enemy3.position = CGPoint(x: (gameFrame?.width)! + 50, y: frame.midY + (coinFlip == 1 ? offset : -offset))
+                enemies?.addChild(enemy3)
+            }
+        }
+        
+        enemies?.zPosition = 0  //these items are going to be in the far back
+        enemies?.addChild(passNode)
+        enemies?.run(enemyAction!)
+        addChild(enemies!)
+    }
+    
+    /*
+     * spawn the detector node that runs through the vertical space of the game and will increment the score when it detects
+     * collision with the ball object
+     */
+    private func spawnDetector()->SKSpriteNode{
         let passNode = SKSpriteNode()   //need to check if the player passes through
         passNode.size = CGSize(width: 1, height: size.height)
         passNode.physicsBody = SKPhysicsBody(rectangleOf: passNode.size)
@@ -121,34 +163,12 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         passNode.physicsBody?.categoryBitMask = CollisionMasks.passThrough
         passNode.physicsBody?.collisionBitMask = CollisionMasks.ball
         passNode.physicsBody?.contactTestBitMask = CollisionMasks.ball
-        
-        let enemy1 = spawnEnemies(Int(arc4random_uniform(score / 4)))   //bomb or wall?
-        let enemy2 = spawnEnemies(Int(arc4random_uniform(score / 4)))   //bomb or wall?
-        
-        let position1 = CGFloat(halfHeight) + randomY //position for enemy1
-        enemy1.position = CGPoint(x: (gameFrame?.width)! + 50, y: position1)
-        enemy2.position = CGPoint(x: (gameFrame?.width)! + 50, y: position1 - (1.5 * randomY))
-        passNode.position = CGPoint(x: enemy1.position.x, y: size.height/2)
-        
-        enemies?.addChild(enemy1)
-        enemies?.addChild(enemy2)
-        
-        /*
-        if enemy1.size != badWallSize && enemy2.size != badWallSize { //maybe we need the 3rd obj
-            let enemy3 = spawnEnemies(Int(arc4random_uniform(score / 4)))
-            enemy3.position = CGPoint(x: (gameFrame?.width)! + 50, y: frame.midY + 50)
-            enemies?.addChild(enemy3)
-        }
-        */
-        
-        enemies?.addChild(passNode)
-        enemies?.zPosition = 0
-        enemies?.run(enemyAction!)
-        addChild(enemies!)
+
+        return passNode
     }
     
     /*
-     * function that actually does the spawning based on random number that gets passed into the function 
+     * function that actually does the spawning based on random number that gets passed into the function
      * this will spawn the appropriate enemy object as well as setting the physics body and the sizes of the objects
      * before passing the object back to the calling function
      */
@@ -246,6 +266,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         }
     }
     
+    //SKScene override function. detects touches 
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         if isPlaying{
             changeBallGravity()
