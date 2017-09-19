@@ -47,8 +47,8 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         scene!.anchorPoint = CGPoint(x: 0, y: 0)    //origin is at bottom left
         scene!.scaleMode = SKSceneScaleMode.fill    //added to scale to fit, will crash if it fails
         
-        let bombSide = size.height / 8
-        let wallHeight = size.height / 3
+        let bombSide = size.height / 8.5
+        let wallHeight = size.height / 3.25
         bombSize = CGSize(width: bombSide, height: bombSide)
         badWallSize = CGSize(width: bombSide, height: wallHeight)
         
@@ -121,8 +121,8 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         let offset2 = CGFloat(arc4random_uniform(UInt32(size.height/4))) - size.height/8   //how much the spawned enemy objects will move in y-axis
         
         let passNode = spawnDetector()  //get the detectorNode
-        let enemy1 = spawnEnemies(Int(arc4random_uniform(score / 4)))   //bomb or wall?
-        let enemy2 = spawnEnemies(Int(arc4random_uniform(score / 4)))   //bomb or wall?
+        let enemy1 = spawnEnemies(Int(arc4random_uniform(score / 5)))   //bomb or wall?
+        let enemy2 = spawnEnemies(Int(arc4random_uniform(score / 5)))   //bomb or wall?
         
         let yPosition1 = size.height/4 + (coinFlip1 == 1 ? +offset1 : -offset1)     //position for enemy1 will be in the bottom half of the screen
         let yPosition2 = size.height * 3/4 + (coinFlip2 == 1 ? +offset2 : -offset2) //position for enemy2 will be in the top half of the screen
@@ -136,12 +136,14 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         enemies?.addChild(enemy2)
         
         if enemy1.size != badWallSize && enemy2.size != badWallSize { //maybe we need the 3rd obj
-            if abs(yPosition1 - yPosition2) > (4 * bombSize.height){ //if the difference in position is greater than k bomb objects, add the 3rd
-                let enemy3 = spawnEnemies(0)    //if there's a 3rd object, its going to be a bomb object
-                let offset = CGFloat(arc4random_uniform(35))
-                let coinFlip = arc4random_uniform(2)    //offset determination
-                enemy3.position = CGPoint(x: (gameFrame?.width)! + 50, y: frame.midY + (coinFlip == 1 ? offset : -offset))
-                enemies?.addChild(enemy3)
+            if arc4random_uniform(score) > 8 { //lets make the 3rd obj random based on score.
+                if abs(yPosition1 - yPosition2) > (4 * bombSize.height){ //if the difference in position is greater than k bomb objects, add the 3rd
+                    let enemy3 = spawnEnemies(0)    //if there's a 3rd object, its going to be a bomb object
+                    let offset = CGFloat(arc4random_uniform(35))
+                    let coinFlip = arc4random_uniform(2)    //offset determination
+                    enemy3.position = CGPoint(x: (gameFrame?.width)! + 50, y: frame.midY + (coinFlip == 1 ? offset : -offset))
+                    enemies?.addChild(enemy3)
+                }
             }
         }
         
@@ -164,7 +166,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         passNode.physicsBody?.categoryBitMask = CollisionMasks.passThrough
         passNode.physicsBody?.collisionBitMask = CollisionMasks.ball
         passNode.physicsBody?.contactTestBitMask = CollisionMasks.ball
-
+        
         return passNode
     }
     
@@ -270,7 +272,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         }
     }
     
-    //SKScene override function. detects touches 
+    //SKScene override function. detects touches
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         if isPlaying{
             changeBallGravity()

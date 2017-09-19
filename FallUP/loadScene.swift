@@ -69,10 +69,12 @@ class LoadScene: SKScene, SKPhysicsContactDelegate{
     private func changeBallGravity(){
         if isBlue{
             ball?.texture = SKTexture(imageNamed: "orangeBall")
+            ball?.physicsBody?.velocity = CGVector(dx: 0, dy: 0)
             physicsWorld.gravity = CGVector(dx: 0.0, dy: +5.0)
             isBlue = false
         }else{
             ball?.texture = SKTexture(imageNamed: "blueBall")
+            ball?.physicsBody?.velocity = CGVector(dx: 0, dy: 0)
             physicsWorld.gravity = CGVector(dx: 0.0, dy: -5.0)
             isBlue = true
         }
