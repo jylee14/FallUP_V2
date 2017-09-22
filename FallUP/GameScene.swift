@@ -29,9 +29,8 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     
     
     //game logic variables
-    private var isBlue = true
-    private var isPlaying = false
-    private var gameFrame: CGSize?
+    private var isBlue = true   //determines the gravity of the ball object
+    private var isPlaying = false   //is the game still going
     private var score:UInt32 = 0   //starts at 0
     
     private var bombSize: CGSize!
@@ -52,7 +51,6 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         bombSize = CGSize(width: bombSide, height: bombSide)
         badWallSize = CGSize(width: bombSide, height: wallHeight)
         
-        gameFrame = view.frame.size
         isPlaying = true
         
         scoreNode.color = SKColor.white
@@ -141,7 +139,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
                     let enemy3 = spawnEnemies(0)    //if there's a 3rd object, its going to be a bomb object
                     let offset = CGFloat(arc4random_uniform(35))
                     let coinFlip = arc4random_uniform(2)    //offset determination
-                    enemy3.position = CGPoint(x: (gameFrame?.width)! + 50, y: frame.midY + (coinFlip == 1 ? offset : -offset))
+                    enemy3.position = CGPoint(x: size.width + 50, y: size.width/2 + (coinFlip == 1 ? offset : -offset))
                     enemies?.addChild(enemy3)
                 }
             }
@@ -174,6 +172,9 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
      * function that actually does the spawning based on random number that gets passed into the function
      * this will spawn the appropriate enemy object as well as setting the physics body and the sizes of the objects
      * before passing the object back to the calling function
+     *
+     * @param: _ enemyCode: Int - determines if the enemy to be spawned is bomb or wall. depends on user's score
+     * @return: SKSpriteNode - initialized enemy object
      */
     private func spawnEnemies(_ enemyCode: Int)->SKSpriteNode{
         let enemy: SKSpriteNode
@@ -207,15 +208,18 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         let char1 = contact.bodyA
         let char2 = contact.bodyB
         
+        //wall and ball collision
         if char1.categoryBitMask | char2.categoryBitMask == CollisionMasks.ball | CollisionMasks.wall && isPlaying {
             changeBallGravity()
         }
         
+        //ball and score node collision
         if char1.categoryBitMask | char2.categoryBitMask == CollisionMasks.ball | CollisionMasks.passThrough && isPlaying {
             score += 1
             scoreNode.text = String(score)
         }
         
+        //ball and enemy collision
         if char1.categoryBitMask | char2.categoryBitMask == CollisionMasks.ball | CollisionMasks.enemy{
             if isPlaying { cleanUpWalls() }
             isPlaying = false
