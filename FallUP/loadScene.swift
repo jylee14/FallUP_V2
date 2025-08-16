@@ -9,24 +9,31 @@
 import Foundation
 import SpriteKit
 
-class LoadScene: SKScene, SKPhysicsContactDelegate{
-    private var ball: SKSpriteNode?         //player
-    private var topWall: SKSpriteNode?      //top boundary
-    private var botWall: SKSpriteNode?      //bottom boundary
-    private var logo: SKSpriteNode?         //logo
-    private var instruction: SKLabelNode?   //instruction
+class LoadScene: SKScene, @preconcurrency SKPhysicsContactDelegate {
+    
+    // MARK: - Properties
+    
+    private var ball: SKSpriteNode?         // player
+    private var topWall: SKSpriteNode?      // top boundary
+    private var botWall: SKSpriteNode?      // bottom boundary
+    private var logo: SKSpriteNode?         // logo
+    private var instruction: SKLabelNode?   // instruction
     
     private var isBlue = false
     
+    // MARK: - Scene Lifecycle
+    
     override func didMove(to view: SKView) {
         self.physicsWorld.contactDelegate = self
-        scene!.anchorPoint = CGPoint(x: 0, y: 0)
-        scene!.scaleMode = SKSceneScaleMode.fill   //added to scale to fit, will crash if it fails
+        scene?.anchorPoint = .zero
+        scene?.scaleMode = .fill   // added to scale to fit, will crash if it fails
         
         initializePermanentObjects()
     }
     
-    private func initializePermanentObjects(){
+    // MARK: - Private Methods
+    
+    private func initializePermanentObjects() {
         let ballSize = size.width/20
         ball = self.childNode(withName: "//ball") as? SKSpriteNode
         ball?.size = CGSize(width: ballSize, height: ballSize)
@@ -59,26 +66,27 @@ class LoadScene: SKScene, SKPhysicsContactDelegate{
         
         instruction = self.childNode(withName: "instruction") as? SKLabelNode
         instruction?.position = CGPoint(x: size.width/2, y: size.height/4)
-        instruction?.fontSize = size.width / CGFloat(20)
+        instruction?.fontSize = size.width / 20
     }
-    
     
     /*
      * change the gravity of the scene
      */
-    private func changeBallGravity(){
-        if isBlue{
+    private func changeBallGravity() {
+        if isBlue {
             ball?.texture = SKTexture(imageNamed: "orangeBall")
-            ball?.physicsBody?.velocity = CGVector(dx: 0, dy: 0)
+            ball?.physicsBody?.velocity = .zero
             physicsWorld.gravity = CGVector(dx: 0.0, dy: +5.0)
             isBlue = false
-        }else{
+        } else {
             ball?.texture = SKTexture(imageNamed: "blueBall")
-            ball?.physicsBody?.velocity = CGVector(dx: 0, dy: 0)
+            ball?.physicsBody?.velocity = .zero
             physicsWorld.gravity = CGVector(dx: 0.0, dy: -5.0)
             isBlue = true
         }
     }
+    
+    // MARK: - SKPhysicsContactDelegate
     
     /*
      * SKPhysicsBody delegate method
@@ -87,20 +95,25 @@ class LoadScene: SKScene, SKPhysicsContactDelegate{
         let char1 = contact.bodyA
         let char2 = contact.bodyB
         
-        if char1.categoryBitMask | char2.categoryBitMask == CollisionMasks.ball | CollisionMasks.wall{
+        if char1.categoryBitMask | char2.categoryBitMask == CollisionMasks.ball | CollisionMasks.wall {
             changeBallGravity()
         }
     }
     
+    // MARK: - Touch Handling
+    
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
-        if self.scene is LoadScene{
-            if let instruction = childNode(withName: "//instruction"), let logo = childNode(withName: "logo"){
+        if self.scene is LoadScene {
+            if let instruction = childNode(withName: "//instruction"), let logo = childNode(withName: "logo") {
                 instruction.removeFromParent()
                 logo.removeFromParent()
                 
-                let fade = SKTransition.fade(withDuration: TimeInterval(1.5))
-                let gameScene = SKScene(fileNamed: "GameScene")
-                self.view?.presentScene(gameScene!, transition: fade)
+                let fade = SKTransition.fade(withDuration: 1.5)
+                guard let gameScene = SKScene(fileNamed: "GameScene") else {
+                    print("Error: Could not load GameScene")
+                    return
+                }
+                self.view?.presentScene(gameScene, transition: fade)
             }
         }
     }
